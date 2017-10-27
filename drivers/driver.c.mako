@@ -514,6 +514,7 @@ void pend_processed(int id)
 long dev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
   Buffer ${", ".join(["tmp_" + s['name'] for s in streams])};
+  hwacc_reg_t r;
 
   DEBUG("ioctl cmd %d | %lu (%lx) \n", cmd, arg, arg);
   switch(cmd){
@@ -530,6 +531,14 @@ long dev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
     case PEND_PROCESSED:
       TRACE("ioctl: PEND_PROCESSED\n");
       pend_processed(arg);
+      break;
+    case SET_REG32:
+      TRACE("ioctl: SET_REG32\n");
+      if(access_ok(VERIFY_READ, (void*)arg, sizeof(hwacc_reg_t)) &&
+         copy_from_user(&r, (void*)(arg), sizeof(hwacc_reg_t)) == 0){
+        iowrite32(r.value, acc_controller + r.offset);
+        return 0;
+      }
       break;
     default:
       return(-EINVAL); // Unknown command, return an error

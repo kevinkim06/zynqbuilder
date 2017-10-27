@@ -25,6 +25,10 @@ typedef struct
   struct mMap* cvals;
   unsigned int mmap_offset;
 } Buffer;
+typedef struct hwacc_reg_t {
+    uint32_t offset;
+    uint32_t value;
+} hwacc_reg_t;
 
 /* Performs any global initialization of the buffer code, such as allocating
  * pools of memory and filling out buffer structs. */
