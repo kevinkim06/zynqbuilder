@@ -49,7 +49,7 @@ MODULE_LICENSE("GPL");
 
 #define ACC_CONTROLLER_BASE ${baseaddr}
 #define ACC_CONTROLLER_SIZE ${regwidth}
-#define ACC_CONTROLLER_PAGES ${(regwidth / 1024) + 1}
+#define ACC_CONTROLLER_PAGES (${regwidth} / 4096 + 1)
 
 // Hardware address pointers from ioremap
 // We do byte-wise pointer arithmetic on these, so use uchar
@@ -255,8 +255,8 @@ void build_sg_chain_2D(const Buffer buf, unsigned long* sg_ptr_base, unsigned lo
   unsigned long* sg_ptr = sg_ptr_base; // Pointer which will be incremented along the chain
   TRACE("build_sg_chain_2D: sg_ptr 0x%lx, sg_phys 0x%lx\n", (unsigned long)sg_ptr, (unsigned long)sg_phys);
 
-  // the sg chain only has one descriptor
-  sg_ptr[0] = virt_to_phys(sg_ptr + SG_DESC_SIZE); // Pointer to next descriptor
+  // the sg chain only has one descriptor, so next pointer points to itself.
+  sg_ptr[0] = virt_to_phys(sg_ptr); // Pointer to next descriptor
   sg_ptr[1] = 0; // Upper 32 bits of descriptor pointer (unused)
   sg_ptr[2] = buf.phys_addr; // Address where the data lives
   sg_ptr[3] = 0; // Upper 32 bits of data address (unused)
@@ -300,16 +300,6 @@ void build_sg_chain_2D(const Buffer buf, unsigned long* sg_ptr_base, unsigned lo
 int process_image(${", ".join(["Buffer* " + s['name'] + "_b" for s in streams])})
 {
   BufferSet* src;
-
-% for s in streams:
-% if s['type'] == 'input':
-  if(${s['name']}_b->width != ${s['width']} ||
-     ${s['name']}_b->height != ${s['height']} ||
-     ${s['name']}_b->depth != ${s['depth']}){
-    ERROR("Buffer size for ${s['name']} doesn't match hardware!");
-  }
-% endif
-% endfor
 
   TRACE("process_image: begin\n");
   // Acquire a bufferset to pass through the processing chain
@@ -391,7 +381,7 @@ void dma_launch_work(struct work_struct* ws)
 % endfor
     // Start the stencil engine running
     // control register [7: auto_restart, --- 3: ap_ready, 2: ap_idle, 1: ap_done, 0: ap_start]
-    iowrite32(0x00000001, acc_controller + ${registers['control']});
+    iowrite32(0x00000001, acc_controller + ${registers['run']});
     TRACE("dma_launch_work: Transfers started\n");
 
     // Move the buffer to the processing list

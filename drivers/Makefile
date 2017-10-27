@@ -32,10 +32,10 @@ cleanall:
 	make ARCH=$(ARCH) -C $(KER_DIR) M=$(PWD) clean
 	rm driver.c
 
-driver.c: driver.c.mako $(HWCONFIG)
+driver.c: driver.c.mako $(HWCONFIG) ../parameterize.py
 	python ../parameterize.py $(HWCONFIG) driver.c.mako:driver.c
 
-dma_bufferset.h: dma_bufferset.h.mako $(HWCONFIG)
+dma_bufferset.h: dma_bufferset.h.mako $(HWCONFIG) ../parameterize.py
 	python ../parameterize.py $(HWCONFIG) dma_bufferset.h.mako:dma_bufferset.h
 
 
